@@ -6,6 +6,7 @@ package cafeloader;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.gnu.DemanglerParseException;
 import ghidra.program.model.listing.Program;
+import ghidra.util.Msg;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +18,8 @@ public final class GHSDemangler implements Demangler {
 
 	private static List<DemangledDataType> arguments;
 	private static DemangledDataType returnType;
-	private static boolean isThunk = false;
-	private static boolean varargs = false;
+	private static boolean isThunk;
+	private static boolean varargs;
 	private static String mangled;
 
 	private static final String[] templatePrefixes = new String[] { "tm", "ps", "pt" /* XXX from libiberty cplus-dem.c */ };
@@ -274,15 +275,13 @@ public final class GHSDemangler implements Demangler {
 
 			if(typeClean.equals("char *") || typeClean.equals("char  *")) {
 				DemangledDataType hackType = new DemangledDataType(null, null, DemangledDataType.CHAR); //TODO: hack!
-				hackType.setPointer64();
+				hackType.incrementPointerLevels(); //TODO: i don't know if this is right
 				arguments.add(hackType);
 			} else if(typeClean.equals("unsigned int")) {
 				DemangledDataType hackType = new DemangledDataType(null, null, DemangledDataType.INT);
 				hackType.setUnsigned();
 				arguments.add(hackType);
-			}
-
-			if(typeClean.equals(DemangledDataType.VARARGS)) {
+			} else if(typeClean.equals(DemangledDataType.VARARGS)) {
 				if (arguments.isEmpty()) {
 					throw new DemanglerParseException("Demangler outputted varargs before any type was defined!");
 				}
@@ -645,6 +644,10 @@ public final class GHSDemangler implements Demangler {
 	@Override  //TODO: the demangler outputs types like "char const *" or "unsigned int" instead of just "char *" or "uint" so ghidra doesn't work properly with that
 	public DemangledObject demangle(String symbol, DemanglerOptions options) { //TODO: get rid of StringWrapper
 		mangled = symbol;
+		returnType = null;
+		arguments = new ArrayList<>();
+		isThunk = false;
+		varargs = false;
 
 		if (mangled.startsWith("__sti__")) {
 			throw new DemanglerParseException("\"__sti__\" pattern is unsupported.");
@@ -753,6 +756,21 @@ public final class GHSDemangler implements Demangler {
 			if(returnType != null)
 				demangled.setReturnType(returnType);
 		}
+
+		if(returnType != null && returnType.getName().matches("Z[0-9]*")) {
+			Msg.error(GHSDemangler.class, "template/1 " + symbol + " (" + declType + ')' + '(' + returnType.getName() + ')');
+			throw new DemanglerParseException("/!\\ Broken Templates detected/1");
+		}
+
+		if(declType.matches(".*Z[0-9]* = Z[0-9]*.*")) {
+			Msg.error(GHSDemangler.class, "template/2 " + symbol + " (" + declType + ')');
+			throw new DemanglerParseException("/!\\ Broken Templates detected/2");
+		}
+
+		if(symbol.contains("Mth")) {
+			Msg.warn(GHSDemangler.class, "HELP ME!!!! " + symbol);
+		}
+
 		demangled.setThunk(isThunk);
 		return demangled;
 	}
