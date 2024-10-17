@@ -648,9 +648,16 @@ public final class GHSDemangler implements Demangler {
 		arguments = new ArrayList<>();
 		isThunk = false;
 		varargs = false;
+		int trailingNumber = -512;
 
 		if (mangled.startsWith("__sti__")) {
 			throw new DemanglerParseException("\"__sti__\" pattern is unsupported.");
+		}
+
+		if( !options.demangleOnlyKnownPatterns() && mangled.matches("___CPR.*_[0-9]")) {
+			Msg.info(GHSDemangler.class, "linker duplicate?");
+			trailingNumber = mangled.charAt(mangled.length() - 1) - '0'; //the zero is here for char -> int
+			mangled = mangled.substring(0, mangled.length() - 2);
 		}
 
 		if ( !options.demangleOnlyKnownPatterns() && mangled.matches("^__ghs_thunk__0x[a-f 0-9]{8}__.*") ) { //regex here matches the memory address, if you are wondering
@@ -658,6 +665,8 @@ public final class GHSDemangler implements Demangler {
 			isThunk = true;
 		}
 		Decompress();
+		if(trailingNumber != -512) //bogus value that we can detect
+			mangled = mangled + '_' + (trailingNumber + '0');
 
 		/*
 		 * This demangle method has basically turned into a hand-written LL(1) recursive descent parser.
@@ -765,10 +774,6 @@ public final class GHSDemangler implements Demangler {
 		if(declType.matches(".*Z[0-9]* = Z[0-9]*.*")) {
 			Msg.error(GHSDemangler.class, "template/2 " + symbol + " (" + declType + ')');
 			throw new DemanglerParseException("/!\\ Broken Templates detected/2");
-		}
-
-		if(symbol.contains("Mth")) {
-			Msg.warn(GHSDemangler.class, "HELP ME!!!! " + symbol);
 		}
 
 		demangled.setThunk(isThunk);
