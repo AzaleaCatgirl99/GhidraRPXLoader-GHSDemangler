@@ -643,6 +643,13 @@ public final class GHSDemangler implements Demangler {
 
 	@Override  //TODO: the demangler outputs types like "char const *" or "unsigned int" instead of just "char *" or "uint" so ghidra doesn't work properly with that
 	public DemangledObject demangle(String symbol, DemanglerOptions options) { //TODO: get rid of StringWrapper
+		char lastChar = symbol.charAt(symbol.length() - 1);
+		while (lastChar == ' ') {
+			lastChar = symbol.charAt(symbol.length() - 1);
+			symbol = symbol.substring(0, symbol.length() - 1);
+		}
+
+
 		mangled = symbol;
 		returnType = null;
 		arguments = new ArrayList<>();
@@ -666,7 +673,7 @@ public final class GHSDemangler implements Demangler {
 		}
 		Decompress();
 		if(trailingNumber != -512) //bogus value that we can detect
-			mangled = mangled + '_' + (trailingNumber + '0');
+			mangled = mangled + '_' + trailingNumber;
 
 		/*
 		 * This demangle method has basically turned into a hand-written LL(1) recursive descent parser.
