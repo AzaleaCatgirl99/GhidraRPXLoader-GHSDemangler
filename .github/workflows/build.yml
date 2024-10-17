@@ -31,3 +31,8 @@ jobs:
       with:
         files: |
           ./dist/*.zip
+    - name: Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: Extension
+        path: ./dist/*.zip
