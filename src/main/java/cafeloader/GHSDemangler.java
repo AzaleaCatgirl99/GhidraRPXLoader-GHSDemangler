@@ -649,7 +649,6 @@ public final class GHSDemangler implements Demangler {
 			symbol = symbol.substring(0, symbol.length() - 1);
 		}
 
-
 		mangled = symbol;
 		returnType = null;
 		arguments = new ArrayList<>();
