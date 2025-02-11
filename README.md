@@ -9,7 +9,6 @@ In case the Espresso language is not found, the loader will switch to the defaul
 Imports in official .rpl/.rpx files may display as "func_xyz" instead of the function's actual name. This issue can be resolved by running the `fix_primary_imports.java` script, which is included with this loader.
 
 ## Building
-
 - Ensure you have ``JAVA_HOME`` set to the path of your JDK 17 installation.
 - Set ``GHIDRA_INSTALL_DIR`` to your Ghidra install directory. This can be done in one of the following ways:
     - **Windows**: Running ``set GHIDRA_INSTALL_DIR=<Absolute path to Ghidra without quotations>``
